@@ -1,26 +1,94 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --foreground: #ffffff;
+  --background: #0f0f0f;
+  --accent: #3b82f6;
+  --surface: #161616;
+  --surface-alt: #1e1e1e;
+  --border: #2a2a2a;
+  --border-light: #333333;
+  --text-secondary: #999999;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+.resize-handle {
+  background-color: var(--border);
+  width: 4px;
+  transition: background-color 0.15s;
+}
+
+.resize-handle:hover,
+.resize-handle:active {
+  background-color: var(--accent);
+}
+
+.btn {
+  border-radius: 4px;
+  font-weight: 500;
+  transition: background-color 0.15s;
+}
+
+.panel-header {
+  background-color: var(--surface-alt);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 12px;
+  font-weight: 500;
+}
+
+.tree-item {
+  border-radius: 3px;
+}
+
+.tree-item:hover {
+  background-color: rgba(255, 255, 255, 0.03);
+}
+
+.tree-item.selected {
+  background-color: rgba(59, 130, 246, 0.15);
+}
+
+.property-row:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+}
+
+.property-input {
+  background-color: #232323;
+  border: 1px solid var(--border-light);
+  border-radius: 3px;
+}
+
+.property-input:focus {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  border-radius: 3px;
+  padding: 3px 8px;
 }

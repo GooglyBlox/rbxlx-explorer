@@ -1,6 +1,69 @@
-import React, { useState } from "react";
+/* eslint-disable @next/next/no-img-element */
+import React, { useMemo, useState } from "react";
 import { TreeNode } from "@/types/rbxlx";
-import { ChevronRight, ChevronDown, File, Folder } from "lucide-react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+
+/**
+ * Roblox Studio shows top‑level services in a fixed order. Everything not in
+ * that list is sorted alphabetically afterwards.
+ */
+const SERVICE_PRIORITY: string[] = [
+  "Workspace",
+  "Players",
+  "Lighting",
+  "ReplicatedFirst",
+  "ReplicatedStorage",
+  "ServerStorage",
+  "ServerScriptService",
+  "StarterPlayer",
+  "StarterGui",
+  "StarterPack",
+  "SoundService",
+  "Teams",
+];
+
+const PRIORITY_MAP = SERVICE_PRIORITY.reduce<Record<string, number>>(
+  (m, name, i) => {
+    m[name] = i;
+    return m;
+  },
+  {}
+);
+
+const sortNodes = (nodes: TreeNode[]): TreeNode[] =>
+  [...nodes].sort((a, b) => {
+    const pa = PRIORITY_MAP[a.class] ?? Number.MAX_SAFE_INTEGER;
+    const pb = PRIORITY_MAP[b.class] ?? Number.MAX_SAFE_INTEGER;
+    if (pa !== pb) return pa - pb;
+    return a.name.localeCompare(b.name);
+  });
+
+/**
+ * Icon loader: <img src="/icons/<Class>.png"> with graceful fallback to
+ * File/Folder when an exact match isn’t found.
+ */
+const getIconForNode = (node: TreeNode) => {
+  const fallback =
+    node.children && node.children.length > 0
+      ? "/icons/Folder.png"
+      : "/icons/File.png";
+
+  return (
+    <img
+      src={`/icons/${node.class}.png`}
+      alt={node.class}
+      className="w-4 h-4 object-contain"
+      onError={(e) => {
+        const img = e.currentTarget as HTMLImageElement;
+        if (img.src !== window.location.origin + fallback) {
+          img.src = fallback;
+        }
+      }}
+    />
+  );
+};
+
+/* -------------------------------------------------------------------------- */
 
 interface TreeViewProps {
   nodes: TreeNode[];
@@ -13,12 +76,21 @@ export const TreeView: React.FC<TreeViewProps> = ({
   onSelectNode,
   selectedNodeId,
 }) => {
+  const sortedTree = useMemo<TreeNode[]>(() => {
+    const deepSort = (list: TreeNode[]): TreeNode[] =>
+      sortNodes(list).map((n) =>
+        n.children ? { ...n, children: deepSort(n.children) } : n
+      );
+
+    return deepSort(nodes);
+  }, [nodes]);
+
   return (
     <div className="p-1.5 overflow-auto">
-      {nodes.map((node) => (
+      {sortedTree.map((n) => (
         <TreeViewNode
-          key={node.id}
-          node={node}
+          key={n.id}
+          node={n}
           level={0}
           onSelectNode={onSelectNode}
           selectedNodeId={selectedNodeId}
@@ -47,12 +119,10 @@ const TreeViewNode: React.FC<TreeViewNodeProps> = ({
 
   const handleToggle = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setExpanded(!expanded);
+    setExpanded((prev) => !prev);
   };
 
-  const handleSelect = () => {
-    onSelectNode(node);
-  };
+  const handleSelect = () => onSelectNode(node);
 
   return (
     <div className="select-none">
@@ -74,19 +144,11 @@ const TreeViewNode: React.FC<TreeViewNodeProps> = ({
               <ChevronRight size={16} className="text-gray-400" />
             )
           ) : (
-            <span className="w-4"></span>
+            <span className="w-4" />
           )}
         </div>
 
-        <div className="mr-2">
-          {node.isScript ? (
-            <File size={16} className="text-yellow-500" />
-          ) : hasChildren ? (
-            <Folder size={16} className="text-blue-500" />
-          ) : (
-            <File size={16} className="text-gray-500" />
-          )}
-        </div>
+        <div className="mr-2">{getIconForNode(node)}</div>
 
         <div className="flex items-center overflow-hidden">
           <span className="mr-2 truncate">{node.name}</span>
@@ -96,10 +158,10 @@ const TreeViewNode: React.FC<TreeViewNodeProps> = ({
 
       {expanded && hasChildren && (
         <div>
-          {node.children!.map((childNode) => (
+          {node.children!.map((child) => (
             <TreeViewNode
-              key={childNode.id}
-              node={childNode}
+              key={child.id}
+              node={child}
               level={level + 1}
               onSelectNode={onSelectNode}
               selectedNodeId={selectedNodeId}

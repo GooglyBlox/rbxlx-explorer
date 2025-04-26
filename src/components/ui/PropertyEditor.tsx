@@ -56,11 +56,13 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
 }) => {
   const [editing, setEditing] = useState(false);
 
-  const initialValue =
-    typeof property.value === "object"
-      ? JSON.stringify(property.value, null, 2)
-      : String(property.value ?? "");
+  const stringify = (v: any) => {
+    if (v === undefined || v === null) return "(empty)";
+    if (typeof v === "object") return JSON.stringify(v, null, 2);
+    return String(v);
+  };
 
+  const initialValue = stringify(property.value);
   const [value, setValue] = useState<string>(initialValue);
 
   const handleValueChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -96,16 +98,12 @@ const PropertyRow: React.FC<PropertyRowProps> = ({
       );
     }
 
-    let displayValue = property.value;
-    if (typeof displayValue === "object") {
-      displayValue = JSON.stringify(displayValue);
-    }
     return (
       <div
         className="cursor-pointer hover:text-blue-400"
         onClick={() => setEditing(true)}
       >
-        {displayValue}
+        {stringify(property.value)}
       </div>
     );
   };

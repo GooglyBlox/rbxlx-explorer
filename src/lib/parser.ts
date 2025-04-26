@@ -7,7 +7,7 @@ interface PropertyObject {
   "@_value"?: any;
   __cdata?: string;
   value?: any;
-  [key: string]: any;
+  [key: string]: any; // nested tags (X, Y, Z, Density, etc.)
 }
 
 // ——————————————————————————————————————————————
@@ -103,16 +103,71 @@ function processProperties(properties: any): RBXLXProperty[] {
   for (const [type, val] of Object.entries(properties)) {
     const arr = Array.isArray(val) ? val : [val];
     arr.forEach((p: PropertyObject) => {
+      const value = getPropertyValue(p, type);
       out.push({
         name: p["@_name"] || "",
         type,
-        value: p.__cdata ?? p["@_value"] ?? p.value,
+        value,
         original: p,
         path: `${type}.${p["@_name"]}`,
       });
     });
   }
   return out;
+}
+
+function getPropertyValue(p: PropertyObject, type: string): any {
+  if (p.__cdata !== undefined) return p.__cdata;
+  if (p["@_value"] !== undefined) return p["@_value"];
+  if (p.value !== undefined) return p.value;
+
+  const nested = Object.keys(p).filter(
+    (k) => !k.startsWith("@_") && k !== "__cdata" && k !== "value"
+  );
+  if (nested.length === 0) return undefined;
+
+  if (type === "Vector3") {
+    const x = p.X ?? 0,
+      y = p.Y ?? 0,
+      z = p.Z ?? 0;
+    return `${x}, ${y}, ${z}`;
+  }
+
+  if (type === "CoordinateFrame") {
+    const order = [
+      "X",
+      "Y",
+      "Z",
+      "R00",
+      "R01",
+      "R02",
+      "R10",
+      "R11",
+      "R12",
+      "R20",
+      "R21",
+      "R22",
+    ];
+    return order.map((k) => p[k] ?? 0).join(" ");
+  }
+
+  if (type === "PhysicalProperties") {
+    if ("CustomPhysics" in p && nested.length === 1) {
+      return String(p.CustomPhysics);
+    }
+    const fields = [
+      p.Density,
+      p.Friction,
+      p.Elasticity,
+      p.FrictionWeight,
+      p.ElasticityWeight,
+    ];
+    return fields.join(" ");
+  }
+
+  const obj: Record<string, any> = {};
+  nested.forEach((k) => (obj[k] = p[k]));
+  return obj;
 }
 
 // ——————————————————————————————————————————————
@@ -154,15 +209,85 @@ export function updatePropertyInRaw(
   if (type === "ProtectedString" && name === "Source") {
     entry.__cdata = value;
     delete entry.value;
-  } else if (type === "string") {
-    // string properties use element text rather than a value attribute
-    entry.value = value;
-    delete entry["@_value"];
-  } else {
-    entry["@_value"] = value;
-    delete entry.value;
+    return clone;
   }
 
+  if (type === "PhysicalProperties") {
+    const vStr = String(value).trim().toLowerCase();
+    if (vStr === "true" || vStr === "false") {
+      entry.CustomPhysics = vStr;
+      return clone;
+    }
+
+    const nums = vStr
+      .split(/[,\s]+/)
+      .filter(Boolean)
+      .map(Number);
+    if (nums.length >= 5) {
+      [
+        entry.Density,
+        entry.Friction,
+        entry.Elasticity,
+        entry.FrictionWeight,
+        entry.ElasticityWeight,
+      ] = nums;
+      entry.CustomPhysics = "true";
+    }
+    return clone;
+  }
+
+  if (entry.__cdata !== undefined) {
+    entry.__cdata = value;
+    return clone;
+  }
+  if (entry.value !== undefined) {
+    entry.value = value;
+    return clone;
+  }
+  if (entry["@_value"] !== undefined) {
+    entry["@_value"] = value;
+    return clone;
+  }
+
+  if (type === "Vector3") {
+    const parts = String(value)
+      .split(/[,\s]+/)
+      .filter(Boolean)
+      .map(Number);
+    if (parts.length === 3) {
+      entry.X = parts[0];
+      entry.Y = parts[1];
+      entry.Z = parts[2];
+    }
+    return clone;
+  }
+
+  if (type === "CoordinateFrame") {
+    const nums = String(value)
+      .split(/[,\s]+/)
+      .filter(Boolean)
+      .map(Number);
+    const keys = [
+      "X",
+      "Y",
+      "Z",
+      "R00",
+      "R01",
+      "R02",
+      "R10",
+      "R11",
+      "R12",
+      "R20",
+      "R21",
+      "R22",
+    ];
+    keys.forEach((k, i) => {
+      if (nums[i] !== undefined) entry[k] = nums[i];
+    });
+    return clone;
+  }
+
+  entry.value = value;
   return clone;
 }
 

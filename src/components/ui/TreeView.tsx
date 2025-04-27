@@ -11,15 +11,18 @@ const SERVICE_PRIORITY: string[] = [
   "Workspace",
   "Players",
   "Lighting",
+  "MaterialService",
+  "NetworkClient",
   "ReplicatedFirst",
   "ReplicatedStorage",
-  "ServerStorage",
   "ServerScriptService",
-  "StarterPlayer",
+  "ServerStorage",
   "StarterGui",
   "StarterPack",
-  "SoundService",
+  "StarterPlayer",
   "Teams",
+  "SoundService",
+  "TextChatService",
 ];
 
 const PRIORITY_MAP = SERVICE_PRIORITY.reduce<Record<string, number>>(

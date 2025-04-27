@@ -12,7 +12,6 @@ const SERVICE_PRIORITY: string[] = [
   "Players",
   "Lighting",
   "MaterialService",
-  "NetworkClient",
   "ReplicatedFirst",
   "ReplicatedStorage",
   "ServerScriptService",

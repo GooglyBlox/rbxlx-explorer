@@ -20,7 +20,7 @@
     "luaparse": "^0.3.1",
     "lucide-react": "^0.503.0",
     "monaco-editor": "^0.52.2",
-    "next": "15.3.1",
+    "next": "15.3.8",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-resizable-panels": "^2.1.8",
